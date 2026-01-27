@@ -2,7 +2,7 @@ import cors from "cors"
 import express from "express"
 import data from "./data.json" with { type: "json" }
 
-const port = process.env.PORT || 8080
+const port = process.env.PORT || 3002;
 const app = express()
 
 app.use(cors())
@@ -74,5 +74,6 @@ app.get("/messages/:id", (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`)
-})
+  console.log(`Server running on http://localhost:${port}`);
+});
+
