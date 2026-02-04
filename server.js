@@ -1,79 +1,112 @@
-import cors from "cors"
-import express from "express"
-import data from "./data.json" with { type: "json" }
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import "dotenv/config";
+import listEndpoints from "express-list-endpoints";
 
-const port = process.env.PORT || 3002;
-const app = express()
+// 1. Import your new User router and User model
+import userRouter from "./routes/userRoutes.js";
+import { User } from "./models/User.js";
 
-app.use(cors())
-app.use(express.json())
+const mongoUrl = process.env.MONGO_URL || "mongodb://localhost/happyThoughts";
 
+mongoose
+  .connect(mongoUrl)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+const port = process.env.PORT || 8080;
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// 2. Add the User Router (this enables /signup and /login)
+app.use(userRouter);
+
+// 3. AUTHENTICATION MIDDLEWARE
+// This function sits between the request and the actual route logic
+const authenticateUser = async (req, res, next) => {
+  const accessToken = req.header("Authorization");
+  try {
+    const user = await User.findOne({ accessToken: accessToken });
+    if (user) {
+      req.user = user; // Makes the user available in req.user
+      next(); // Success! Go to the next function
+    } else {
+      res.status(401).json({ success: false, response: "Please log in" });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, response: error.message });
+  }
+};
+
+const Message = mongoose.model(
+  "Message",
+  new mongoose.Schema({
+    message: {
+      type: String,
+      required: true,
+      minlength: 5,
+      maxlength: 140,
+      trim: true,
+    },
+    hearts: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
+  })
+);
+
+// --- ROUTES ---
 
 app.get("/", (req, res) => {
   res.json({
-    name: "Happy Thoughts API",
-    version: "1.0",
-    endpoints: [
-      {
-        method: "GET",
-        path: "/",
-        description: "API documentation (this page)",
-      },
-      {
-        method: "GET",
-        path: "/messages",
-        description: "Get all messages (collection)",
-      },
-      {
-        method: "GET",
-        path: "/messages/:id",
-        description: "Get a single message by id",
-      },
-      {
-        method: "GET",
-        path: "/messages?liked=true",
-        description: "Get only liked messages (hearts > 0)",
-      },
-      {
-        method: "GET",
-        path: "/messages?search=happy",
-        description: "Search messages by text (example: happy)",
-      },
-    ],
-  })
-})
+    message: "Happy Thoughts API",
+    endpoints: listEndpoints(app),
+  });
+});
 
-
-app.get("/messages", (req, res) => {
-  const { liked, search } = req.query
-
-  let results = [...data]
-
-  if (liked === "true") {
-    results = results.filter((msg) => msg.hearts > 0)
+app.get("/messages", async (req, res) => {
+  try {
+    const messages = await Message.find()
+      .sort({ createdAt: -1 })
+      .limit(20);
+    res.status(200).json({ success: true, response: messages });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Could not fetch messages" });
   }
+});
 
-  if (search) {
-    const term = String(search).toLowerCase()
-    results = results.filter((msg) =>
-      msg.message.toLowerCase().includes(term)
-    )
+// 4. PROTECTED POST ROUTE
+// Only users with a valid token can post now
+app.post("/messages", authenticateUser, async (req, res) => {
+  try {
+    const created = await new Message({ message: req.body.message }).save();
+    res.status(201).json({ success: true, response: created });
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+      message: "Could not save message",
+      errors: err?.errors,
+    });
   }
+});
 
-  res.json(results)
-})
+// --- REMAINING ROUTES ---
 
-app.get("/messages/:id", (req, res) => {
-  const message = data.find((msg) => msg._id === req.params.id)
-
-  if (!message) {
-    return res.status(404).json({ error: "No message with that id" })
+app.post("/messages/:id/like", async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ success: false, message: "Invalid ID" });
   }
-
-  res.json(message)
-})
+  try {
+    const updated = await Message.findByIdAndUpdate(id, { $inc: { hearts: 1 } }, { new: true });
+    if (!updated) return res.status(404).json({ success: false, message: "Not found" });
+    res.status(200).json({ success: true, response: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Could not update likes" });
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
-
