@@ -19,3 +19,5 @@ const UserSchema = new mongoose.Schema({
 });
 
 export const User = mongoose.model("User", UserSchema);
+
+// In here i have defined the User Schema

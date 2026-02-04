@@ -56,7 +56,7 @@ const Message = mongoose.model(
   })
 );
 
-// --- ROUTES ---
+// --- Message ROUTES and Restful ---
 
 app.get("/", (req, res) => {
   res.json({
@@ -77,7 +77,7 @@ app.get("/messages", async (req, res) => {
 });
 
 // 4. PROTECTED POST ROUTE
-// Only users with a valid token can post now
+// this is my protected route. Only users with a valid token can post now
 app.post("/messages", authenticateUser, async (req, res) => {
   try {
     const created = await new Message({ message: req.body.message }).save();
