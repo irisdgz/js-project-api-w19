@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 
 // 2. Add the User Router (this enables /signup and /login)
-app.use(userRouter);
+app.use("/users", userRouter);
 
 // 3. AUTHENTICATION MIDDLEWARE
 // This function sits between the request and the actual route logic
