@@ -31,8 +31,8 @@ const authenticateUser = async (req, res, next) => {
   try {
     const user = await User.findOne({ accessToken: accessToken });
     if (user) {
-      req.user = user; // Makes the user available in req.user
-      next(); // Success! Go to the next function
+      req.user = user; 
+      next(); 
     } else {
       res.status(401).json({ success: false, response: "Please log in" });
     }
@@ -65,11 +65,11 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/messages", async (req, res) => {
+app.get("/messages", async (req, res) => {  //GET /messages: Fetching the latest 20 thoughts
   try {
-    const messages = await Message.find()
-      .sort({ createdAt: -1 })
-      .limit(20);
+    const messages = await Message.find() // Fetches thoughts from the database
+      .sort({ createdAt: -1 })  // Sorts them by newest first
+      .limit(20); // Limits the result to exactly 20
     res.status(200).json({ success: true, response: messages });
   } catch (err) {
     res.status(500).json({ success: false, message: "Could not fetch messages" });
