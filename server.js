@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import "dotenv/config";
 import listEndpoints from "express-list-endpoints";
 
-// 1. Import your new User router and User model
+// Import User router and User model
 import userRouter from "./routes/userRoutes.js";
 import { User } from "./models/User.js";
 
@@ -21,10 +21,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 2. Add the User Router (this enables /signup and /login)
+// Add the User Router (this enables /signup and /login)
 app.use("/users", userRouter);
 
-// 3. AUTHENTICATION MIDDLEWARE
+// AUTHENTICATION MIDDLEWARE
 // This function sits between the request and the actual route logic
 const authenticateUser = async (req, res, next) => {
   const accessToken = req.header("Authorization");
@@ -56,7 +56,7 @@ const Message = mongoose.model(
   })
 );
 
-// --- Message ROUTES and Restful ---
+// Message ROUTES and Restful
 
 app.get("/", (req, res) => {
   res.json({
@@ -69,14 +69,14 @@ app.get("/messages", async (req, res) => {  //GET /messages: Fetching the latest
   try {
     const messages = await Message.find() // Fetches thoughts from the database
       .sort({ createdAt: -1 })  // Sorts them by newest first
-      .limit(20); // Limits the result to exactly 20
+      .limit(20); // Limits the result to 20
     res.status(200).json({ success: true, response: messages });
   } catch (err) {
     res.status(500).json({ success: false, message: "Could not fetch messages" });
   }
 });
 
-// 4. PROTECTED POST ROUTE
+// PROTECTED POST ROUTE
 // this is my protected route. Only users with a valid token can post now
 app.post("/messages", authenticateUser, async (req, res) => {
   try {
@@ -91,7 +91,7 @@ app.post("/messages", authenticateUser, async (req, res) => {
   }
 });
 
-// --- REMAINING ROUTES ---
+// REMAINING ROUTES
 
 app.post("/messages/:id/like", async (req, res) => {
   const { id } = req.params;
