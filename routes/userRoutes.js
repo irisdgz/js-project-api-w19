@@ -8,7 +8,12 @@ const router = express.Router();
 router.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required" });
+    }
+
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
@@ -16,7 +21,7 @@ router.post("/signup", async (req, res) => {
 
     const salt = bcrypt.genSaltSync();
     const hashedPassword = bcrypt.hashSync(password, salt);
-    const user = new User({ email, password: hashedPassword });
+    const user = new User({ email: email.toLowerCase().trim(), password: hashedPassword });
     await user.save();
 
     res.status(201).json({
@@ -24,7 +29,7 @@ router.post("/signup", async (req, res) => {
       response: { email: user.email, id: user._id, accessToken: user.accessToken },
     });
   } catch (error) {
-    res.status(400).json({ success: false, response: error });
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 
@@ -32,7 +37,12 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: "Email and password are required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (user && bcrypt.compareSync(password, user.password)) {
       res.json({
@@ -43,7 +53,7 @@ router.post("/login", async (req, res) => {
       res.status(401).json({ success: false, message: "Invalid email or password" });
     }
   } catch (error) {
-    res.status(500).json({ success: false, response: error });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
