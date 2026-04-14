@@ -13,10 +13,11 @@ const UserSchema = new mongoose.Schema({
   },
   accessToken: {
     type: String,
-  
+    // this generates a long random string as the user's secret token
     default: () => crypto.randomBytes(128).toString("hex"),
   },
 });
 
 export const User = mongoose.model("User", UserSchema);
 
+// In here i have defined the User Schema
