@@ -18,7 +18,12 @@ mongoose
 const port = process.env.PORT || 8080;
 const app = express();
 
-app.use(cors());
+// Fixed CORS so frontend can talk to the backend
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 
 // Add the User Router (this enables /signup and /login)
@@ -50,6 +55,11 @@ const Message = mongoose.model(
       minlength: 5,
       maxlength: 140,
       trim: true,
+    },
+    // Store who posted the thought so we can check ownership in the frontend
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     hearts: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
@@ -99,7 +109,10 @@ app.get("/messages/:id", async (req, res) => {
 // this is my protected route. Only users with a valid token can post now
 app.post("/messages", authenticateUser, async (req, res) => {
   try {
-    const created = await new Message({ message: req.body.message }).save();
+    const created = await new Message({
+      message: req.body.message,
+      user: req.user._id  // save who posted it
+    }).save();
     res.status(201).json({ success: true, response: created });
   } catch (err) {
     res.status(400).json({
