@@ -18,7 +18,7 @@ mongoose
 const port = process.env.PORT || 8080;
 const app = express();
 
-// Fixed CORS so frontend can talk to the backend
+
 app.use(cors({
   origin: "*",
   methods: ["GET", "POST", "PATCH", "DELETE"],
@@ -30,7 +30,7 @@ app.use(express.json());
 app.use("/users", userRouter);
 
 // AUTHENTICATION MIDDLEWARE
-// This function sits between the request and the actual route logic
+
 const authenticateUser = async (req, res, next) => {
   const accessToken = req.header("Authorization");
   try {
@@ -106,7 +106,7 @@ app.get("/messages/:id", async (req, res) => {
 });
 
 // POST a new thought (authenticated)
-// this is my protected route. Only users with a valid token can post now
+
 app.post("/messages", authenticateUser, async (req, res) => {
   try {
     const created = await new Message({
